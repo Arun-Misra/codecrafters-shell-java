@@ -11,9 +11,11 @@ public class Main {
             if (!s.hasNextLine()) {
                 break;
             }
-
-            String command = s.nextLine();
-            System.out.println(command + ": command not found");
+            String cmd = s.nextLine();
+            if(cmd.equals("exit")){
+                break;
+            }
+            System.out.println(cmd + ": command not found");
         }
     }
 }
