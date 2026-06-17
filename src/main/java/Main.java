@@ -8,25 +8,22 @@ public class Main {
         Scanner s = new Scanner(System.in);
         while (true) {
             System.out.print("$ ");
-            if (!s.hasNextLine()) {
-                break;
-            }
             String cmd = s.nextLine();
-            if(cmd.equals("exit")){
+            if (cmd.equals("exit")) {
                 break;
-            }
-            if(cmd.startsWith("echo ")){
+            } else if (cmd.startsWith("echo ")) {
                 System.out.println(cmd.substring(5));
-            }
-            if(cmd.startsWith("type ")){
-                if(cmd.substring(5).equals("exit") || cmd.substring(5).equals("echo")|| cmd.substring(5).equals("type")){
-                System.out.println(cmd.substring(5) + " is a shell builtin");}
-                else{
-                    System.out.println(cmd.substring(5) + ": not found");
+            } else if (cmd.startsWith("type ")) {
+                String arg = cmd.substring(5);
+
+                if (arg.equals("exit") || arg.equals("echo") || arg.equals("type")) {
+                    System.out.println(arg + " is a shell builtin");
+                } else {
+                    System.out.println(arg + ": not found");
                 }
+            } else {
+                System.out.println(cmd + ": command not found");
             }
-            else{
-            System.out.println(cmd + ": command not found");}
         }
     }
 }
