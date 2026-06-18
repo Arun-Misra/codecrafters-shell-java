@@ -1,4 +1,6 @@
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,6 +17,17 @@ public class Main {
 
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
+            String outputFile = null;
+            for (int i = 0; i < parts.size(); i++) {
+                if (parts.get(i).equals(">") || parts.get(i).equals("1>")) {
+                    if (i + 1 < parts.size()) {
+                        outputFile = parts.get(i + 1);
+                    }
+
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+            }
 
             if (parts.isEmpty()) {
                 continue;
@@ -52,12 +65,23 @@ public class Main {
             }
 
             else if (parts.get(0).equals("echo")) {
+                StringBuilder sb = new StringBuilder();
+
                 for (int i = 1; i < parts.size(); i++) {
-                    if (i > 1)
-                        System.out.print(" ");
-                    System.out.print(parts.get(i));
+                    if (i > 1) sb.append(" ");
+                    sb.append(parts.get(i));
                 }
-                System.out.println();
+
+                String out = sb.toString();
+
+                if (outputFile == null) {
+                    System.out.println(out);
+                } else {
+                    Files.writeString(
+                        Path.of(outputFile),
+                        out + System.lineSeparator()
+                    );
+                }
             }
 
             else if (parts.get(0).equals("type")) {
@@ -102,7 +126,14 @@ public class Main {
                 if (exe != null) {
                     ProcessBuilder pb = new ProcessBuilder(parts);
                     pb.directory(currentDir);
-                    pb.inheritIO();
+
+                    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+                    if (outputFile != null) {
+                        pb.redirectOutput(new File(outputFile));
+                    } else {
+                        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                    }
 
                     Process p = pb.start();
                     p.waitFor();
