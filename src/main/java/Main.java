@@ -28,7 +28,6 @@ public class Main {
         int nextJobId = 1;
         List<Job> jobs = new ArrayList<>();
         while (true) {
-            reapJobs(jobs);
             System.out.print("$ ");
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
@@ -175,29 +174,51 @@ public class Main {
                 }
             }
 
-      else if (parts.get(0).equals("jobs")) {
+            else if (parts.get(0).equals("jobs")) {
 
-    int last = jobs.size() - 1;
-    int secondLast = jobs.size() - 2;
+            List<Job> doneJobs = new ArrayList<>();
 
-    for (int i = 0; i < jobs.size(); i++) {
-        Job job = jobs.get(i);
+            int last = jobs.size() - 1;
+            int secondLast = jobs.size() - 2;
 
-        char marker = ' ';
-        if (i == last) {
-            marker = '+';
-        } else if (i == secondLast) {
-            marker = '-';
+            for (int i = 0; i < jobs.size(); i++) {
+                Job job = jobs.get(i);
+
+                char marker = ' ';
+                if (i == last) marker = '+';
+                else if (i == secondLast) marker = '-';
+
+                if (job.process.isAlive()) {
+
+                    System.out.printf(
+                        "[%d]%c  %-24s%s%n",
+                        job.id,
+                        marker,
+                        "Running",
+                        job.command
+                    );
+
+                } else {
+
+                    String cmdText = job.command;
+                    if (cmdText.endsWith(" &")) {
+                        cmdText = cmdText.substring(0, cmdText.length() - 2);
+                    }
+
+                    System.out.printf(
+                        "[%d]%c  %-24s%s%n",
+                        job.id,
+                        marker,
+                        "Done",
+                        cmdText
+                    );
+
+                    doneJobs.add(job);
+                }
+            }
+
+            jobs.removeAll(doneJobs);
         }
-
-        System.out.printf(
-                "[%d]%c  %-24s%s%n",
-                job.id,
-                marker,
-                "Running",
-                job.command);
-    }
-}
 
             else {
                 String prog = parts.get(0);
