@@ -18,8 +18,9 @@ public class Main {
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
             String outputFile = null;
-            String errorFile = null;
             boolean appendOutput = false;
+            String errorFile = null;
+            boolean appendError = false;
 
             for (int i = 0; i < parts.size(); i++) {
                 String token = parts.get(i);
@@ -39,6 +40,14 @@ public class Main {
 
                 if (token.equals("2>")) {
                     errorFile = parts.get(i + 1);
+                    appendError = false;
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+
+                if (token.equals("2>>")) {
+                    errorFile = parts.get(i + 1);
+                    appendError = true;
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
                 }
@@ -82,9 +91,16 @@ public class Main {
             else if (parts.get(0).equals("echo")) {
 
                 if (errorFile != null) {
-                    Files.writeString(Path.of(errorFile), "");
+                    if (appendError) {
+                        Files.writeString(
+                                Path.of(errorFile),
+                                "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(Path.of(errorFile), "");
+                    }
                 }
-
                 StringBuilder sb = new StringBuilder();
 
                 for (int i = 1; i < parts.size(); i++) {
@@ -166,9 +182,13 @@ public class Main {
                     } else {
                         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                     }
-
                     if (errorFile != null) {
-                        pb.redirectError(new File(errorFile));
+                        if (appendError) {
+                            pb.redirectError(
+                                    ProcessBuilder.Redirect.appendTo(new File(errorFile)));
+                        } else {
+                            pb.redirectError(new File(errorFile));
+                        }
                     } else {
                         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                     }
