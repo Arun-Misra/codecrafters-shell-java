@@ -19,11 +19,20 @@ public class Main {
             List<String> parts = parse(cmd);
             String outputFile = null;
             String errorFile = null;
+            boolean appendOutput = false;
+
             for (int i = 0; i < parts.size(); i++) {
                 String token = parts.get(i);
-
                 if (token.equals(">") || token.equals("1>")) {
                     outputFile = parts.get(i + 1);
+                    appendOutput = false;
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+
+                if (token.equals(">>") || token.equals("1>>")) {
+                    outputFile = parts.get(i + 1);
+                    appendOutput = true;
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
                 }
@@ -89,9 +98,17 @@ public class Main {
                 if (outputFile == null) {
                     System.out.println(out);
                 } else {
-                    Files.writeString(
-                            Path.of(outputFile),
-                            out + System.lineSeparator());
+                    if (appendOutput) {
+                        Files.writeString(
+                                Path.of(outputFile),
+                                out + System.lineSeparator(),
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(
+                                Path.of(outputFile),
+                                out + System.lineSeparator());
+                    }
                 }
             }
 
@@ -141,7 +158,11 @@ public class Main {
                     pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 
                     if (outputFile != null) {
-                        pb.redirectOutput(new File(outputFile));
+                        if (appendOutput) {
+                            pb.redirectOutput(ProcessBuilder.Redirect.appendTo(new File(outputFile)));
+                        } else {
+                            pb.redirectOutput(new File(outputFile));
+                        }
                     } else {
                         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                     }
