@@ -334,8 +334,8 @@ public class Main {
             File currentDir,
             String[] pth) throws Exception {
 
-        File leftExe = findExecutable(left.get(0), pth);
-        File rightExe = findExecutable(right.get(0), pth);
+        // File leftExe = findExecutable(left.get(0), pth);
+        // File rightExe = findExecutable(right.get(0), pth);
 
         // left.set(0, leftExe.getAbsolutePath());
         // right.set(0, rightExe.getAbsolutePath());
@@ -357,12 +357,20 @@ public class Main {
             try (
                     var in = p1.getInputStream();
                     var out = p2.getOutputStream()) {
-                in.transferTo(out);
-                out.flush();
+
+                byte[] buf = new byte[8192];
+                int n;
+
+                while ((n = in.read(buf)) != -1) {
+                    out.write(buf, 0, n);
+                    out.flush();
+                }
+
             } catch (Exception ignored) {
             }
         });
 
+        pipeThread.setDaemon(true);
         pipeThread.start();
 
         p2.waitFor();
