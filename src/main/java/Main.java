@@ -36,7 +36,7 @@ public class Main {
 
                 List<String> left = new ArrayList<>(parts.subList(0, pipeIdx));
                 List<String> right = new ArrayList<>(parts.subList(pipeIdx + 1, parts.size()));
-                runPipeline(left, right, currentDir);
+                runPipeline(left, right, currentDir, pth);
 
                 continue;
             }
