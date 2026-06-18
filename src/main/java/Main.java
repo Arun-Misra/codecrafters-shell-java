@@ -337,11 +337,8 @@ public class Main {
         File leftExe = findExecutable(left.get(0), pth);
         File rightExe = findExecutable(right.get(0), pth);
 
-        left.set(0, leftExe.getAbsolutePath());
-        right.set(0, rightExe.getAbsolutePath());
-
-        System.err.println(left);
-        System.err.println(right);
+        // left.set(0, leftExe.getAbsolutePath());
+        // right.set(0, rightExe.getAbsolutePath());
 
         ProcessBuilder pb1 = new ProcessBuilder(left);
         ProcessBuilder pb2 = new ProcessBuilder(right);
@@ -371,7 +368,7 @@ public class Main {
         p2.waitFor();
 
         if (p1.isAlive()) {
-            p1.destroy();
+            p1.destroyForcibly();
         }
 
         pipeThread.join();
