@@ -7,13 +7,24 @@ public class Main {
         // TODO: Uncomment the code below to pass the first stage
         Scanner s = new Scanner(System.in);
         String[] pth = System.getenv("PATH").split(File.pathSeparator);
+        File currentDir = new File(System.getProperty("user.dir"));
         while (true) {
             System.out.print("$ ");
             String cmd = s.nextLine();
             if (cmd.equals("exit")) {
                 break;
             } else if (cmd.equals("pwd")) {
-                System.out.println(System.getProperty("user.dir"));
+                System.out.println(currentDir.getAbsolutePath());
+            } else if (cmd.startsWith("cd ")) {
+                String path = cmd.substring(3);
+
+                File newDir = new File(path);
+
+                if (newDir.exists() && newDir.isDirectory()) {
+                    currentDir = newDir;
+                } else {
+                    System.out.println("cd: " + path + ": No such file or directory");
+                }
             } else if (cmd.startsWith("echo ")) {
                 System.out.println(cmd.substring(5));
             } else if (cmd.startsWith("type ")) {
