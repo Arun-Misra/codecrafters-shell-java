@@ -31,6 +31,15 @@ public class Main {
             System.out.print("$ ");
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
+            if (parts.contains("|")) {
+                int pipeIdx = parts.indexOf("|");
+
+                List<String> left = new ArrayList<>(parts.subList(0, pipeIdx));
+                List<String> right = new ArrayList<>(parts.subList(pipeIdx + 1, parts.size()));
+                runPipeline(left, right, currentDir);
+
+                continue;
+            }
             String outputFile = null;
             boolean appendOutput = false;
             String errorFile = null;
@@ -319,6 +328,49 @@ public class Main {
         jobs.removeAll(doneJobs);
     }
 
+    static void runPipeline(
+            List<String> left,
+            List<String> right,
+            File currentDir,
+            String[] pth) throws Exception {
+
+        File leftExe = findExecutable(left.get(0), pth);
+        File rightExe = findExecutable(right.get(0), pth);
+
+        left.set(0, leftExe.getAbsolutePath());
+        right.set(0, rightExe.getAbsolutePath());
+
+        ProcessBuilder pb1 = new ProcessBuilder(left);
+        ProcessBuilder pb2 = new ProcessBuilder(right);
+
+        pb1.directory(currentDir);
+        pb2.directory(currentDir);
+
+        pb1.redirectError(ProcessBuilder.Redirect.INHERIT);
+        pb2.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        Process p1 = pb1.start();
+        Process p2 = pb2.start();
+
+        Thread pipeThread = new Thread(() -> {
+            try (
+                    var in = p1.getInputStream();
+                    var out = p2.getOutputStream()) {
+                in.transferTo(out);
+                out.close();
+            } catch (Exception e) {
+            }
+        });
+
+        pipeThread.start();
+
+        p2.getInputStream().transferTo(System.out);
+
+        p1.waitFor();
+        p2.waitFor();
+        pipeThread.join();
+    }
+
     static int nextJobNumber(List<Job> jobs) {
         int id = 1;
 
@@ -338,6 +390,17 @@ public class Main {
 
             id++;
         }
+    }
+
+    static File findExecutable(String prog, String[] pth) {
+        for (String dir : pth) {
+            File f = new File(dir, prog);
+
+            if (f.exists() && f.canExecute()) {
+                return f;
+            }
+        }
+        return null;
     }
 
     static List<String> parse(String s) {
@@ -387,6 +450,12 @@ public class Main {
                     if (i + 1 < s.length()) {
                         cur.append(s.charAt(++i));
                     }
+                } else if (c == '|') {
+                    if (cur.length() > 0) {
+                        args.add(cur.toString());
+                        cur.setLength(0);
+                    }
+                    args.add("|");
                 } else if (Character.isWhitespace(c)) {
                     if (cur.length() > 0) {
                         args.add(cur.toString());
