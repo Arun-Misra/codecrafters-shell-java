@@ -5,19 +5,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-static class Job {
-    int id;
-    Process process;
-    String command;
-
-    Job(int id, Process process, String command) {
-        this.id = id;
-        this.process = process;
-        this.command = command;
-    }
-}
-
 public class Main {
+
+    static class Job {
+        int id;
+        Process process;
+        String command;
+
+        Job(int id, Process process, String command) {
+            this.id = id;
+            this.process = process;
+            this.command = command;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner s = new Scanner(System.in);
 
@@ -67,8 +68,7 @@ public class Main {
             }
             boolean background = false;
 
-            if (!parts.isEmpty() &&
-                    parts.get(parts.size() - 1).equals("&")) {
+            if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
                 background = true;
                 parts.remove(parts.size() - 1);
             }
@@ -172,8 +172,8 @@ public class Main {
                         System.out.println(chk + ": not found");
                     }
                 }
-            } 
-            
+            }
+
             else if (parts.get(0).equals("jobs")) {
                 for (Job job : jobs) {
                     if (job.process.isAlive()) {
@@ -184,8 +184,8 @@ public class Main {
                                 job.command);
                     }
                 }
-            } 
-            
+            }
+
             else {
                 String prog = parts.get(0);
 
