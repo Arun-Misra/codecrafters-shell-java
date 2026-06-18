@@ -348,37 +348,32 @@ public class Main {
 
         pb1.redirectError(ProcessBuilder.Redirect.INHERIT);
         pb2.redirectError(ProcessBuilder.Redirect.INHERIT);
+        pb2.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 
         Process p1 = pb1.start();
         Process p2 = pb2.start();
 
         Thread pipeThread = new Thread(() -> {
-            try (
-                    var in = p1.getInputStream();
-                    var out = p2.getOutputStream()) {
-                in.transferTo(out);
-                out.close();
-            } catch (Exception e) {
+            try {
+                p1.getInputStream().transferTo(p2.getOutputStream());
+            } catch (Exception ignored) {
+            } finally {
+                try {
+                    p2.getOutputStream().close();
+                } catch (Exception ignored) {
+                }
             }
         });
 
         pipeThread.start();
 
-        Thread outputThread = new Thread(() -> {
-            try {
-                p2.getInputStream().transferTo(System.out);
-            } catch (Exception e) {
-            }
-        });
-
-        outputThread.start();
-
         p2.waitFor();
 
-        p1.destroy();
+        if (p1.isAlive()) {
+            p1.destroy();
+        }
 
         pipeThread.join();
-        outputThread.join();
     }
 
     static int nextJobNumber(List<Job> jobs) {
