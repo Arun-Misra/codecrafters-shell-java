@@ -177,9 +177,6 @@ public class Main {
             }
 
             else if (parts.get(0).equals("jobs")) {
-
-                reapJobs(jobs);
-
                 int last = jobs.size() - 1;
                 int secondLast = jobs.size() - 2;
 
@@ -201,7 +198,7 @@ public class Main {
                             job.command);
                 }
             }
-            
+
             else {
                 String prog = parts.get(0);
 
@@ -300,7 +297,9 @@ public class Main {
                     cmdText);
         }
 
-        jobs.removeAll(doneJobs);
+        if (!doneJobs.isEmpty()) {
+            jobs.removeAll(doneJobs);
+        }
     }
 
     static List<String> parse(String s) {
