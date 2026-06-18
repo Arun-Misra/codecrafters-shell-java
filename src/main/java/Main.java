@@ -1,23 +1,39 @@
-
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        // TODO: Uncomment the code below to pass the first stage
         Scanner s = new Scanner(System.in);
+
         String[] pth = System.getenv("PATH").split(File.pathSeparator);
         File currentDir = new File(System.getProperty("user.dir"));
+
         while (true) {
             System.out.print("$ ");
+
             String cmd = s.nextLine();
+            List<String> parts = parse(cmd);
+
+            if (parts.isEmpty()) {
+                continue;
+            }
+
             if (cmd.equals("exit")) {
                 break;
-            } else if (cmd.equals("pwd")) {
-                System.out.println(currentDir.getAbsolutePath());
-            } else if (cmd.startsWith("cd ")) {
-                String path = cmd.substring(3);
+            }
 
+            else if (parts.get(0).equals("pwd")) {
+                System.out.println(currentDir.getAbsolutePath());
+            }
+
+            else if (parts.get(0).equals("cd")) {
+                if (parts.size() < 2) {
+                    continue;
+                }
+
+                String path = parts.get(1);
                 File newDir;
 
                 if (path.equals("~")) {
@@ -33,17 +49,32 @@ public class Main {
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
-            } else if (cmd.startsWith("echo ")) {
-                System.out.println(cmd.substring(5));
-            } else if (cmd.startsWith("type ")) {
-                String chk = cmd.substring(5);
+            }
 
-                if (chk.equals("exit") || chk.equals("echo") || chk.equals("type") || chk.equals("pwd") || chk.equals("cd")) {
+            else if (parts.get(0).equals("echo")) {
+                for (int i = 1; i < parts.size(); i++) {
+                    if (i > 1)
+                        System.out.print(" ");
+                    System.out.print(parts.get(i));
+                }
+                System.out.println();
+            }
+
+            else if (parts.get(0).equals("type")) {
+                if (parts.size() < 2) {
+                    continue;
+                }
+
+                String chk = parts.get(1);
+
+                if (chk.equals("exit") || chk.equals("echo") || chk.equals("type") || chk.equals("pwd")
+                        || chk.equals("cd")) {
                     System.out.println(chk + " is a shell builtin");
                 } else {
                     boolean fnd = false;
                     for (String dir : pth) {
                         File f = new File(dir, chk);
+
                         if (f.exists() && f.canExecute()) {
                             System.out.println(chk + " is " + f.getAbsolutePath());
                             fnd = true;
@@ -55,20 +86,24 @@ public class Main {
                     }
                 }
             } else {
-                String[] pt = cmd.split(" ");
-                String prog = pt[0];
+                String prog = parts.get(0);
+
                 File exe = null;
+
                 for (String dir : pth) {
                     File f = new File(dir, prog);
+
                     if (f.exists() && f.canExecute()) {
                         exe = f;
                         break;
                     }
                 }
+
                 if (exe != null) {
-                    ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
-                    // pb.command().set(0, exe.getAbsolutePath());
+                    ProcessBuilder pb = new ProcessBuilder(parts);
+                    pb.directory(currentDir);
                     pb.inheritIO();
+
                     Process p = pb.start();
                     p.waitFor();
                 } else {
@@ -77,4 +112,33 @@ public class Main {
             }
         }
     }
+    
+    static List<String> parse(String s) {
+        List<String> args = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+
+        boolean inSingle = false;
+
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+
+            if (c == '\'') {
+                inSingle = !inSingle;
+            } else if (Character.isWhitespace(c) && !inSingle) {
+                if (cur.length() > 0) {
+                    args.add(cur.toString());
+                    cur.setLength(0);
+                }
+            } else {
+                cur.append(c);
+            }
+        }
+
+        if (cur.length() > 0) {
+            args.add(cur.toString());
+        }
+
+        return args;
+    }
+
 }
