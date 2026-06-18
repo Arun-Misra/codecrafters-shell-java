@@ -112,24 +112,29 @@ public class Main {
             }
         }
     }
-    
     static List<String> parse(String s) {
         List<String> args = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
 
         boolean inSingle = false;
+        boolean inDouble = false;
 
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
 
-            if (c == '\'') {
+            if (c == '\'' && !inDouble) {
                 inSingle = !inSingle;
-            } else if (Character.isWhitespace(c) && !inSingle) {
+            }
+            else if (c == '"' && !inSingle) {
+                inDouble = !inDouble;
+            }
+            else if (Character.isWhitespace(c) && !inSingle && !inDouble) {
                 if (cur.length() > 0) {
                     args.add(cur.toString());
                     cur.setLength(0);
                 }
-            } else {
+            }
+            else {
                 cur.append(c);
             }
         }
@@ -140,5 +145,4 @@ public class Main {
 
         return args;
     }
-
 }
