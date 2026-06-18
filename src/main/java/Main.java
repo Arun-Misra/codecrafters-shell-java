@@ -364,11 +364,21 @@ public class Main {
 
         pipeThread.start();
 
-        p2.getInputStream().transferTo(System.out);
+        Thread outputThread = new Thread(() -> {
+            try {
+                p2.getInputStream().transferTo(System.out);
+            } catch (Exception e) {
+            }
+        });
 
-        p1.waitFor();
+        outputThread.start();
+
         p2.waitFor();
+
+        p1.destroy();
+
         pipeThread.join();
+        outputThread.join();
     }
 
     static int nextJobNumber(List<Job> jobs) {
