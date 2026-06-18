@@ -30,7 +30,7 @@ public class Main {
             } else if (cmd.startsWith("type ")) {
                 String chk = cmd.substring(5);
 
-                if (chk.equals("exit") || chk.equals("echo") || chk.equals("type") || chk.equals("pwd")) {
+                if (chk.equals("exit") || chk.equals("echo") || chk.equals("type") || chk.equals("pwd") || chk.equals("cd")) {
                     System.out.println(chk + " is a shell builtin");
                 } else {
                     boolean fnd = false;
