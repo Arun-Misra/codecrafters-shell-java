@@ -18,12 +18,18 @@ public class Main {
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
             String outputFile = null;
+            String errorFile = null;
             for (int i = 0; i < parts.size(); i++) {
-                if (parts.get(i).equals(">") || parts.get(i).equals("1>")) {
-                    if (i + 1 < parts.size()) {
-                        outputFile = parts.get(i + 1);
-                    }
+                String token = parts.get(i);
 
+                if (token.equals(">") || token.equals("1>")) {
+                    outputFile = parts.get(i + 1);
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+
+                if (token.equals("2>")) {
+                    errorFile = parts.get(i + 1);
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
                 }
@@ -133,6 +139,12 @@ public class Main {
                         pb.redirectOutput(new File(outputFile));
                     } else {
                         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                    }
+
+                    if (errorFile != null) {
+                        pb.redirectError(new File(errorFile));
+                    } else {
+                        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                     }
 
                     Process p = pb.start();
