@@ -20,7 +20,9 @@ public class Main {
 
                 File newDir;
 
-                if (new File(path).isAbsolute()) {
+                if (path.equals("~")) {
+                    newDir = new File(System.getenv("HOME"));
+                } else if (new File(path).isAbsolute()) {
                     newDir = new File(path);
                 } else {
                     newDir = new File(currentDir, path);
