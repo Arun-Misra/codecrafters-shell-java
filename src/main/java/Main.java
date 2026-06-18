@@ -339,7 +339,54 @@ public class Main {
 
         // left.set(0, leftExe.getAbsolutePath());
         // right.set(0, rightExe.getAbsolutePath());
+        boolean leftBuiltin = isBuiltin(left.get(0));
+        boolean rightBuiltin = isBuiltin(right.get(0));
+        if (leftBuiltin && !rightBuiltin) {
 
+            String output = "";
+
+            if (left.get(0).equals("echo")) {
+                StringBuilder sb = new StringBuilder();
+
+                for (int i = 1; i < left.size(); i++) {
+                    if (i > 1)
+                        sb.append(" ");
+                    sb.append(left.get(i));
+                }
+
+                output = sb.toString() + "\n";
+            }
+
+            ProcessBuilder pb = new ProcessBuilder(right);
+
+            pb.directory(currentDir);
+            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+
+            Process p = pb.start();
+
+            p.getOutputStream().write(output.getBytes());
+            p.getOutputStream().close();
+
+            p.waitFor();
+            return;
+        }
+
+        if (!leftBuiltin && rightBuiltin) {
+
+            if (right.get(0).equals("type")) {
+
+                String chk = right.get(1);
+
+                if (isBuiltin(chk)) {
+                    System.out.println(chk + " is a shell builtin");
+                } else {
+                    System.out.println(chk + ": not found");
+                }
+            }
+
+            return;
+        }
         ProcessBuilder pb1 = new ProcessBuilder(left);
         ProcessBuilder pb2 = new ProcessBuilder(right);
 
@@ -380,6 +427,15 @@ public class Main {
         }
 
         pipeThread.join();
+    }
+
+    static boolean isBuiltin(String cmd) {
+        return cmd.equals("echo")
+                || cmd.equals("type")
+                || cmd.equals("pwd")
+                || cmd.equals("cd")
+                || cmd.equals("jobs")
+                || cmd.equals("exit");
     }
 
     static int nextJobNumber(List<Job> jobs) {
