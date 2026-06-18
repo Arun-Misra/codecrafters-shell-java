@@ -158,31 +158,48 @@ public class Main {
                         || chk.equals("cd") || chk.equals("jobs")) {
                     System.out.println(chk + " is a shell builtin");
                 } else {
-                    boolean fnd = false;
+                    boolean find = false;
                     for (String dir : pth) {
                         File f = new File(dir, chk);
 
                         if (f.exists() && f.canExecute()) {
                             System.out.println(chk + " is " + f.getAbsolutePath());
-                            fnd = true;
+                            find = true;
                             break;
                         }
                     }
-                    if (!fnd) {
+                    if (!find) {
                         System.out.println(chk + ": not found");
                     }
                 }
             }
 
             else if (parts.get(0).equals("jobs")) {
-                for (Job job : jobs) {
-                    if (job.process.isAlive()) {
-                        System.out.printf(
-                                "[%d]+  %-24s%s%n",
-                                job.id,
-                                "Running",
-                                job.command);
+
+                int last = jobs.size() - 1;
+                int secondLast = jobs.size() - 2;
+
+                for (int i = 0; i < jobs.size(); i++) {
+                    Job job = jobs.get(i);
+
+                    if (!job.process.isAlive()) {
+                        continue;
                     }
+
+                    char marker = ' ';
+
+                    if (i == last) {
+                        marker = '+';
+                    } else if (i == secondLast) {
+                        marker = '-';
+                    }
+
+                    System.out.printf(
+                            "[%d]%c  %-24s%s%n",
+                            job.id,
+                            marker,
+                            "Running",
+                            job.command);
                 }
             }
 
