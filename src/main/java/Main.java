@@ -136,7 +136,7 @@ public class Main {
                 String chk = parts.get(1);
 
                 if (chk.equals("exit") || chk.equals("echo") || chk.equals("type") || chk.equals("pwd")
-                        || chk.equals("cd")) {
+                        || chk.equals("cd") || chk.equals("jobs")) {
                     System.out.println(chk + " is a shell builtin");
                 } else {
                     boolean fnd = false;
@@ -153,6 +153,7 @@ public class Main {
                         System.out.println(chk + ": not found");
                     }
                 }
+            } else if (parts.get(0).equals("jobs")) {
             } else {
                 String prog = parts.get(0);
 
@@ -199,6 +200,7 @@ public class Main {
                     System.out.println(cmd + ": command not found");
                 }
             }
+
         }
     }
 
