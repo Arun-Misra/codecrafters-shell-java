@@ -11,7 +11,7 @@ public class Main {
 
         String[] pth = System.getenv("PATH").split(File.pathSeparator);
         File currentDir = new File(System.getProperty("user.dir"));
-
+        int nextJobId = 1;
         while (true) {
             System.out.print("$ ");
 
@@ -52,7 +52,13 @@ public class Main {
                     break;
                 }
             }
+            boolean background = false;
 
+            if (!parts.isEmpty() &&
+                    parts.get(parts.size() - 1).equals("&")) {
+                background = true;
+                parts.remove(parts.size() - 1);
+            }
             if (parts.isEmpty()) {
                 continue;
             }
@@ -195,7 +201,12 @@ public class Main {
                     }
 
                     Process p = pb.start();
-                    p.waitFor();
+
+                    if (background) {
+                        System.out.println("[" + nextJobId++ + "] " + p.pid());
+                    } else {
+                        p.waitFor();
+                    }
                 } else {
                     System.out.println(cmd + ": command not found");
                 }
