@@ -32,12 +32,7 @@ public class Main {
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
             if (parts.contains("|")) {
-                int pipeIdx = parts.indexOf("|");
-
-                List<String> left = new ArrayList<>(parts.subList(0, pipeIdx));
-                List<String> right = new ArrayList<>(parts.subList(pipeIdx + 1, parts.size()));
-                runPipeline(left, right, currentDir, pth);
-
+                runPipeline(parts, currentDir, pth);
                 continue;
             }
             String outputFile = null;
@@ -329,105 +324,81 @@ public class Main {
     }
 
     static void runPipeline(
-            List<String> left,
-            List<String> right,
-            File currentDir,
-            String[] pth) throws Exception {
+        List<String> parts,
+        File currentDir,
+        String[] pth) throws Exception {
+            List<List<String>> commands = new ArrayList<>();
+List<String> cur = new ArrayList<>();
 
-        // File leftExe = findExecutable(left.get(0), pth);
-        // File rightExe = findExecutable(right.get(0), pth);
-
-        // left.set(0, leftExe.getAbsolutePath());
-        // right.set(0, rightExe.getAbsolutePath());
-        boolean leftBuiltin = isBuiltin(left.get(0));
-        boolean rightBuiltin = isBuiltin(right.get(0));
-        if (leftBuiltin && !rightBuiltin) {
-
-            String output = "";
-
-            if (left.get(0).equals("echo")) {
-                StringBuilder sb = new StringBuilder();
-
-                for (int i = 1; i < left.size(); i++) {
-                    if (i > 1)
-                        sb.append(" ");
-                    sb.append(left.get(i));
-                }
-
-                output = sb.toString() + "\n";
-            }
-
-            ProcessBuilder pb = new ProcessBuilder(right);
-
-            pb.directory(currentDir);
-            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-
-            Process p = pb.start();
-
-            p.getOutputStream().write(output.getBytes());
-            p.getOutputStream().close();
-
-            p.waitFor();
-            return;
-        }
-
-        if (!leftBuiltin && rightBuiltin) {
-
-            if (right.get(0).equals("type")) {
-
-                String chk = right.get(1);
-
-                if (isBuiltin(chk)) {
-                    System.out.println(chk + " is a shell builtin");
-                } else {
-                    System.out.println(chk + ": not found");
-                }
-            }
-
-            return;
-        }
-        ProcessBuilder pb1 = new ProcessBuilder(left);
-        ProcessBuilder pb2 = new ProcessBuilder(right);
-
-        pb1.directory(currentDir);
-        pb2.directory(currentDir);
-
-        pb1.redirectError(ProcessBuilder.Redirect.INHERIT);
-        pb2.redirectError(ProcessBuilder.Redirect.INHERIT);
-        pb2.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-
-        Process p1 = pb1.start();
-        Process p2 = pb2.start();
-
-        Thread pipeThread = new Thread(() -> {
-            try (
-                    var in = p1.getInputStream();
-                    var out = p2.getOutputStream()) {
-
-                byte[] buf = new byte[8192];
-                int n;
-
-                while ((n = in.read(buf)) != -1) {
-                    out.write(buf, 0, n);
-                    out.flush();
-                }
-
-            } catch (Exception ignored) {
-            }
-        });
-
-        pipeThread.setDaemon(true);
-        pipeThread.start();
-
-        p2.waitFor();
-
-        if (p1.isAlive()) {
-            p1.destroyForcibly();
-        }
-
-        pipeThread.join();
+for (String s : parts) {
+    if (s.equals("|")) {
+        commands.add(cur);
+        cur = new ArrayList<>();
+    } else {
+        cur.add(s);
     }
+}
+
+commands.add(cur);
+
+List<Process> procs = new ArrayList<>();
+
+for (List<String> cmd : commands) {
+
+    ProcessBuilder pb = new ProcessBuilder(cmd);
+
+    pb.directory(currentDir);
+    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+    if (cmd == commands.get(commands.size()-1)) {
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+    }
+
+    procs.add(pb.start());
+}
+List<Thread> threads = new ArrayList<>();
+
+for (int i = 0; i < procs.size()-1; i++) {
+
+    Process src = procs.get(i);
+    Process dst = procs.get(i+1);
+
+    Thread t = new Thread(() -> {
+        try (
+            var in = src.getInputStream();
+            var out = dst.getOutputStream()
+        ) {
+            byte[] buf = new byte[8192];
+            int n;
+
+            while ((n = in.read(buf)) != -1) {
+                out.write(buf,0,n);
+                out.flush();
+            }
+
+            out.close();
+
+        } catch(Exception ignored) {}
+    });
+
+    t.setDaemon(true);
+    t.start();
+
+    threads.add(t);
+}
+Process last = procs.get(procs.size()-1);
+
+last.waitFor();
+for(Process p : procs) {
+    if(p.isAlive()) {
+        p.destroyForcibly();
+    }
+}
+
+for(Thread t : threads) {
+    t.join();
+}
+        }
 
     static boolean isBuiltin(String cmd) {
         return cmd.equals("echo")
