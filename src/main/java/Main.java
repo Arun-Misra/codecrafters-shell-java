@@ -340,6 +340,9 @@ public class Main {
         left.set(0, leftExe.getAbsolutePath());
         right.set(0, rightExe.getAbsolutePath());
 
+        System.err.println(left);
+        System.err.println(right);
+
         ProcessBuilder pb1 = new ProcessBuilder(left);
         ProcessBuilder pb2 = new ProcessBuilder(right);
 
@@ -354,14 +357,12 @@ public class Main {
         Process p2 = pb2.start();
 
         Thread pipeThread = new Thread(() -> {
-            try {
-                p1.getInputStream().transferTo(p2.getOutputStream());
+            try (
+                    var in = p1.getInputStream();
+                    var out = p2.getOutputStream()) {
+                in.transferTo(out);
+                out.flush();
             } catch (Exception ignored) {
-            } finally {
-                try {
-                    p2.getOutputStream().close();
-                } catch (Exception ignored) {
-                }
             }
         });
 
