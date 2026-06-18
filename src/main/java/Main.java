@@ -71,10 +71,16 @@ public class Main {
             }
 
             else if (parts.get(0).equals("echo")) {
+
+                if (errorFile != null) {
+                    Files.writeString(Path.of(errorFile), "");
+                }
+
                 StringBuilder sb = new StringBuilder();
 
                 for (int i = 1; i < parts.size(); i++) {
-                    if (i > 1) sb.append(" ");
+                    if (i > 1)
+                        sb.append(" ");
                     sb.append(parts.get(i));
                 }
 
@@ -84,9 +90,8 @@ public class Main {
                     System.out.println(out);
                 } else {
                     Files.writeString(
-                        Path.of(outputFile),
-                        out + System.lineSeparator()
-                    );
+                            Path.of(outputFile),
+                            out + System.lineSeparator());
                 }
             }
 
