@@ -123,21 +123,51 @@ public class Main {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
 
-            if (c == '\'' && !inDouble) {
-                inSingle = !inSingle;
-            } else if (c == '"' && !inSingle) {
-                inDouble = !inDouble;
-            } else if (c == '\\' && !inSingle && !inDouble) {
-                if (i + 1 < s.length()) {
-                    cur.append(s.charAt(++i));
+            if (inSingle) {
+                if (c == '\'') {
+                    inSingle = false;
+                } else {
+                    cur.append(c);
                 }
-            } else if (Character.isWhitespace(c) && !inSingle && !inDouble) {
-                if (cur.length() > 0) {
-                    args.add(cur.toString());
-                    cur.setLength(0);
+            }
+
+            else if (inDouble) {
+                if (c == '"') {
+                    inDouble = false;
+                } else if (c == '\\') {
+                    if (i + 1 < s.length()) {
+                        char nxt = s.charAt(i + 1);
+                        if (nxt == '"' || nxt == '\\') {
+                            cur.append(nxt);
+                            i++;
+                        } else {
+                            cur.append('\\');
+                        }
+                    } else {
+                        cur.append('\\');
+                    }
+                } else {
+                    cur.append(c);
                 }
-            } else {
-                cur.append(c);
+            }
+
+            else {
+                if (c == '\'') {
+                    inSingle = true;
+                } else if (c == '"') {
+                    inDouble = true;
+                } else if (c == '\\') {
+                    if (i + 1 < s.length()) {
+                        cur.append(s.charAt(++i));
+                    }
+                } else if (Character.isWhitespace(c)) {
+                    if (cur.length() > 0) {
+                        args.add(cur.toString());
+                        cur.setLength(0);
+                    }
+                } else {
+                    cur.append(c);
+                }
             }
         }
 
