@@ -112,6 +112,7 @@ public class Main {
             }
         }
     }
+
     static List<String> parse(String s) {
         List<String> args = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
@@ -122,24 +123,20 @@ public class Main {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
 
-            if (!inSingle && !inDouble && c == '\\') {
+            if (c == '\'' && !inDouble) {
+                inSingle = !inSingle;
+            } else if (c == '"' && !inSingle) {
+                inDouble = !inDouble;
+            } else if (c == '\\' && !inSingle && !inDouble) {
                 if (i + 1 < s.length()) {
                     cur.append(s.charAt(++i));
                 }
-            }
-            else if (c == '\'' && !inDouble) {
-                inSingle = !inSingle;
-            }
-            else if (c == '"' && !inSingle) {
-                inDouble = !inDouble;
-            }
-            else if (Character.isWhitespace(c) && !inSingle && !inDouble) {
+            } else if (Character.isWhitespace(c) && !inSingle && !inDouble) {
                 if (cur.length() > 0) {
                     args.add(cur.toString());
                     cur.setLength(0);
                 }
-            }
-            else {
+            } else {
                 cur.append(c);
             }
         }
