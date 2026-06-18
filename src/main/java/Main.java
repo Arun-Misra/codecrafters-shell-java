@@ -11,7 +11,7 @@ public class Main {
         int id;
         Process process;
         String command;
-        boolean doneShown = false;
+        // boolean doneShown = false;
 
         Job(int id, Process process, String command) {
             this.id = id;
@@ -28,8 +28,9 @@ public class Main {
         int nextJobId = 1;
         List<Job> jobs = new ArrayList<>();
         while (true) {
-            System.out.print("$ ");
+            reapJobs(jobs);
 
+            System.out.print("$ ");
             String cmd = s.nextLine();
             List<String> parts = parse(cmd);
             String outputFile = null;
@@ -177,20 +178,13 @@ public class Main {
 
             else if (parts.get(0).equals("jobs")) {
 
-                List<Job> visible = new ArrayList<>();
-                List<Job> toRemove = new ArrayList<>();
+                reapJobs(jobs);
 
-                for (Job job : jobs) {
-                    if (job.process.isAlive() || !job.doneShown) {
-                        visible.add(job);
-                    }
-                }
+                int last = jobs.size() - 1;
+                int secondLast = jobs.size() - 2;
 
-                int last = visible.size() - 1;
-                int secondLast = visible.size() - 2;
-
-                for (int i = 0; i < visible.size(); i++) {
-                    Job job = visible.get(i);
+                for (int i = 0; i < jobs.size(); i++) {
+                    Job job = jobs.get(i);
 
                     char marker = ' ';
                     if (i == last) {
@@ -199,37 +193,15 @@ public class Main {
                         marker = '-';
                     }
 
-                    if (job.process.isAlive()) {
-
-                        System.out.printf(
-                                "[%d]%c  %-24s%s%n",
-                                job.id,
-                                marker,
-                                "Running",
-                                job.command);
-
-                    } else {
-
-                        String cmdText = job.command;
-                        if (cmdText.endsWith(" &")) {
-                            cmdText = cmdText.substring(0, cmdText.length() - 2);
-                        }
-
-                        System.out.printf(
-                                "[%d]%c  %-24s%s%n",
-                                job.id,
-                                marker,
-                                "Done",
-                                cmdText);
-
-                        job.doneShown = true;
-                        toRemove.add(job);
-                    }
+                    System.out.printf(
+                            "[%d]%c  %-24s%s%n",
+                            job.id,
+                            marker,
+                            "Running",
+                            job.command);
                 }
-
-                jobs.removeAll(toRemove);
             }
-
+            
             else {
                 String prog = parts.get(0);
 
@@ -287,6 +259,48 @@ public class Main {
             }
 
         }
+    }
+
+    static void reapJobs(List<Job> jobs) {
+        List<Job> doneJobs = new ArrayList<>();
+
+        for (Job job : jobs) {
+            if (!job.process.isAlive()) {
+                doneJobs.add(job);
+            }
+        }
+
+        int last = jobs.size() - 1;
+        int secondLast = jobs.size() - 2;
+
+        for (int i = 0; i < jobs.size(); i++) {
+            Job job = jobs.get(i);
+
+            if (!doneJobs.contains(job)) {
+                continue;
+            }
+
+            char marker = ' ';
+            if (i == last) {
+                marker = '+';
+            } else if (i == secondLast) {
+                marker = '-';
+            }
+
+            String cmdText = job.command;
+            if (cmdText.endsWith(" &")) {
+                cmdText = cmdText.substring(0, cmdText.length() - 2);
+            }
+
+            System.out.printf(
+                    "[%d]%c  %-24s%s%n",
+                    job.id,
+                    marker,
+                    "Done",
+                    cmdText);
+        }
+
+        jobs.removeAll(doneJobs);
     }
 
     static List<String> parse(String s) {
