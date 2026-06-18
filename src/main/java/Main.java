@@ -327,78 +327,114 @@ public class Main {
         List<String> parts,
         File currentDir,
         String[] pth) throws Exception {
-            List<List<String>> commands = new ArrayList<>();
-List<String> cur = new ArrayList<>();
 
-for (String s : parts) {
-    if (s.equals("|")) {
-        commands.add(cur);
-        cur = new ArrayList<>();
-    } else {
-        cur.add(s);
-    }
-}
+    List<List<String>> commands = new ArrayList<>();
+    List<String> cur = new ArrayList<>();
 
-commands.add(cur);
-
-List<Process> procs = new ArrayList<>();
-
-for (List<String> cmd : commands) {
-
-    ProcessBuilder pb = new ProcessBuilder(cmd);
-
-    pb.directory(currentDir);
-    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-
-    if (cmd == commands.get(commands.size()-1)) {
-        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-    }
-
-    procs.add(pb.start());
-}
-List<Thread> threads = new ArrayList<>();
-
-for (int i = 0; i < procs.size()-1; i++) {
-
-    Process src = procs.get(i);
-    Process dst = procs.get(i+1);
-
-    Thread t = new Thread(() -> {
-        try (
-            var in = src.getInputStream();
-            var out = dst.getOutputStream()
-        ) {
-            byte[] buf = new byte[8192];
-            int n;
-
-            while ((n = in.read(buf)) != -1) {
-                out.write(buf,0,n);
-                out.flush();
-            }
-
-            out.close();
-
-        } catch(Exception ignored) {}
-    });
-
-    t.setDaemon(true);
-    t.start();
-
-    threads.add(t);
-}
-Process last = procs.get(procs.size()-1);
-
-last.waitFor();
-for(Process p : procs) {
-    if(p.isAlive()) {
-        p.destroyForcibly();
-    }
-}
-
-for(Thread t : threads) {
-    t.join();
-}
+    for (String s : parts) {
+        if (s.equals("|")) {
+            commands.add(cur);
+            cur = new ArrayList<>();
+        } else {
+            cur.add(s);
         }
+    }
+
+    commands.add(cur);
+
+    // Handle built-in at the end of pipeline
+    List<String> lastCmd = commands.get(commands.size() - 1);
+
+    if (isBuiltin(lastCmd.get(0))) {
+
+        if (lastCmd.get(0).equals("type")) {
+
+            String chk = lastCmd.get(1);
+
+            if (isBuiltin(chk)) {
+                System.out.println(chk + " is a shell builtin");
+            } else {
+                System.out.println(chk + ": not found");
+            }
+        }
+
+        else if (lastCmd.get(0).equals("echo")) {
+            for (int i = 1; i < lastCmd.size(); i++) {
+                if (i > 1) System.out.print(" ");
+                System.out.print(lastCmd.get(i));
+            }
+            System.out.println();
+        }
+
+        else if (lastCmd.get(0).equals("pwd")) {
+            System.out.println(currentDir.getAbsolutePath());
+        }
+
+        return;
+    }
+
+    List<Process> procs = new ArrayList<>();
+
+    for (int i = 0; i < commands.size(); i++) {
+
+        ProcessBuilder pb = new ProcessBuilder(commands.get(i));
+
+        pb.directory(currentDir);
+        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        if (i == commands.size() - 1) {
+            pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        }
+
+        procs.add(pb.start());
+    }
+
+    List<Thread> threads = new ArrayList<>();
+
+    for (int i = 0; i < procs.size() - 1; i++) {
+
+        Process src = procs.get(i);
+        Process dst = procs.get(i + 1);
+
+        Thread t = new Thread(() -> {
+            try (
+                    var in = src.getInputStream();
+                    var out = dst.getOutputStream()) {
+
+                byte[] buf = new byte[8192];
+                int n;
+
+                while ((n = in.read(buf)) != -1) {
+                    out.write(buf, 0, n);
+                    out.flush();
+                }
+
+                out.close();
+
+            } catch (Exception ignored) {
+            }
+        });
+
+        t.setDaemon(true);
+        t.start();
+
+        threads.add(t);
+    }
+
+    Process last = procs.get(procs.size() - 1);
+
+    last.waitFor();
+
+    for (Process p : procs) {
+        if (p.isAlive()) {
+            p.destroyForcibly();
+        }
+    }
+
+    for (Thread t : threads) {
+        t.join();
+    }
+}
 
     static boolean isBuiltin(String cmd) {
         return cmd.equals("echo")
