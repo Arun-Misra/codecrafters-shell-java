@@ -25,7 +25,6 @@ public class Main {
 
         String[] pth = System.getenv("PATH").split(File.pathSeparator);
         File currentDir = new File(System.getProperty("user.dir"));
-        int nextJobId = 1;
         List<Job> jobs = new ArrayList<>();
         while (true) {
             reapJobs(jobs);
@@ -264,7 +263,7 @@ public class Main {
                     Process p = pb.start();
 
                     if (background) {
-                        int jobId = nextJobId++;
+                        int jobId = nextJobNumber(jobs);
 
                         jobs.add(new Job(jobId, p, cmd));
 
@@ -318,6 +317,27 @@ public class Main {
         }
 
         jobs.removeAll(doneJobs);
+    }
+
+    static int nextJobNumber(List<Job> jobs) {
+        int id = 1;
+
+        while (true) {
+            boolean used = false;
+
+            for (Job job : jobs) {
+                if (job.id == id) {
+                    used = true;
+                    break;
+                }
+            }
+
+            if (!used) {
+                return id;
+            }
+
+            id++;
+        }
     }
 
     static List<String> parse(String s) {
