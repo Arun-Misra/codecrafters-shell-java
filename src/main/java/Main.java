@@ -122,7 +122,12 @@ public class Main {
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
 
-            if (c == '\'' && !inDouble) {
+            if (!inSingle && !inDouble && c == '\\') {
+                if (i + 1 < s.length()) {
+                    cur.append(s.charAt(++i));
+                }
+            }
+            else if (c == '\'' && !inDouble) {
                 inSingle = !inSingle;
             }
             else if (c == '"' && !inSingle) {
