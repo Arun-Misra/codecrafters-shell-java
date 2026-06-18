@@ -177,13 +177,20 @@ public class Main {
 
             else if (parts.get(0).equals("jobs")) {
 
+                List<Job> visible = new ArrayList<>();
                 List<Job> toRemove = new ArrayList<>();
 
-                int last = jobs.size() - 1;
-                int secondLast = jobs.size() - 2;
+                for (Job job : jobs) {
+                    if (job.process.isAlive() || !job.doneShown) {
+                        visible.add(job);
+                    }
+                }
 
-                for (int i = 0; i < jobs.size(); i++) {
-                    Job job = jobs.get(i);
+                int last = visible.size() - 1;
+                int secondLast = visible.size() - 2;
+
+                for (int i = 0; i < visible.size(); i++) {
+                    Job job = visible.get(i);
 
                     char marker = ' ';
                     if (i == last) {
@@ -203,24 +210,20 @@ public class Main {
 
                     } else {
 
-                        if (!job.doneShown) {
-
-                            String cmdText = job.command;
-                            if (cmdText.endsWith(" &")) {
-                                cmdText = cmdText.substring(0, cmdText.length() - 2);
-                            }
-
-                            System.out.printf(
-                                    "[%d]%c  %-24s%s%n",
-                                    job.id,
-                                    marker,
-                                    "Done",
-                                    cmdText);
-
-                            job.doneShown = true;
-                        } else {
-                            toRemove.add(job);
+                        String cmdText = job.command;
+                        if (cmdText.endsWith(" &")) {
+                            cmdText = cmdText.substring(0, cmdText.length() - 2);
                         }
+
+                        System.out.printf(
+                                "[%d]%c  %-24s%s%n",
+                                job.id,
+                                marker,
+                                "Done",
+                                cmdText);
+
+                        job.doneShown = true;
+                        toRemove.add(job);
                     }
                 }
 
