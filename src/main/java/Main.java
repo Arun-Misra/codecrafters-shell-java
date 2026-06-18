@@ -5,6 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+static class Job {
+    int id;
+    Process process;
+    String command;
+
+    Job(int id, Process process, String command) {
+        this.id = id;
+        this.process = process;
+        this.command = command;
+    }
+}
+
 public class Main {
     public static void main(String[] args) throws Exception {
         Scanner s = new Scanner(System.in);
@@ -12,6 +24,7 @@ public class Main {
         String[] pth = System.getenv("PATH").split(File.pathSeparator);
         File currentDir = new File(System.getProperty("user.dir"));
         int nextJobId = 1;
+        List<Job> jobs = new ArrayList<>();
         while (true) {
             System.out.print("$ ");
 
@@ -159,8 +172,21 @@ public class Main {
                         System.out.println(chk + ": not found");
                     }
                 }
-            } else if (parts.get(0).equals("jobs")) {
-            } else {
+            } 
+            
+            else if (parts.get(0).equals("jobs")) {
+                for (Job job : jobs) {
+                    if (job.process.isAlive()) {
+                        System.out.printf(
+                                "[%d]+  %-24s%s%n",
+                                job.id,
+                                "Running",
+                                job.command);
+                    }
+                }
+            } 
+            
+            else {
                 String prog = parts.get(0);
 
                 File exe = null;
@@ -203,7 +229,11 @@ public class Main {
                     Process p = pb.start();
 
                     if (background) {
-                        System.out.println("[" + nextJobId++ + "] " + p.pid());
+                        int jobId = nextJobId++;
+
+                        jobs.add(new Job(jobId, p, cmd));
+
+                        System.out.println("[" + jobId + "] " + p.pid());
                     } else {
                         p.waitFor();
                     }
