@@ -47,9 +47,8 @@ public class Main {
                     }
                 }
                 if(exe!=null){
-                    pt[0] = exe.getAbsolutePath();
-
-                    ProcessBuilder pb = new ProcessBuilder(pt);
+                    ProcessBuilder pb = new ProcessBuilder(cmd.split(" "));
+                    pb.command().set(0, exe.getAbsolutePath());
                     pb.inheritIO();
                     Process p = pb.start();
                     p.waitFor();
