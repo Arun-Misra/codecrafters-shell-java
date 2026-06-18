@@ -11,16 +11,22 @@ public class Main {
         while (true) {
             System.out.print("$ ");
             String cmd = s.nextLine();
-            if (cmd.equals("exit")) {
+            if (cmd.equals("exit")){
                 break;
-            } else if (cmd.startsWith("echo ")) {
+            }
+            else if(cmd.equals("pwd")){
+                System.out.println(System.getProperty("user.dir"));
+            }   
+                else if(cmd.startsWith("echo ")){
                 System.out.println(cmd.substring(5));
-            } else if (cmd.startsWith("type ")) {
+            }
+            else if(cmd.startsWith("type ")){
                 String chk = cmd.substring(5);
 
                 if (chk.equals("exit") || chk.equals("echo") || chk.equals("type")) {
                     System.out.println(chk + " is a shell builtin");
-                } else {
+                }
+                else{
                     boolean fnd = false;
                     for (String dir : pth) {
                         File f = new File(dir, chk);
