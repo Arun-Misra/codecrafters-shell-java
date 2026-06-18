@@ -11,6 +11,7 @@ public class Main {
         int id;
         Process process;
         String command;
+        boolean doneShown = false;
 
         Job(int id, Process process, String command) {
             this.id = id;
@@ -176,31 +177,54 @@ public class Main {
 
             else if (parts.get(0).equals("jobs")) {
 
+                List<Job> toRemove = new ArrayList<>();
+
                 int last = jobs.size() - 1;
                 int secondLast = jobs.size() - 2;
 
                 for (int i = 0; i < jobs.size(); i++) {
                     Job job = jobs.get(i);
 
-                    if (!job.process.isAlive()) {
-                        continue;
-                    }
-
                     char marker = ' ';
-
                     if (i == last) {
                         marker = '+';
                     } else if (i == secondLast) {
                         marker = '-';
                     }
 
-                    System.out.printf(
-                            "[%d]%c  %-24s%s%n",
-                            job.id,
-                            marker,
-                            "Running",
-                            job.command);
+                    if (job.process.isAlive()) {
+
+                        System.out.printf(
+                                "[%d]%c  %-24s%s%n",
+                                job.id,
+                                marker,
+                                "Running",
+                                job.command);
+
+                    } else {
+
+                        if (!job.doneShown) {
+
+                            String cmdText = job.command;
+                            if (cmdText.endsWith(" &")) {
+                                cmdText = cmdText.substring(0, cmdText.length() - 2);
+                            }
+
+                            System.out.printf(
+                                    "[%d]%c  %-24s%s%n",
+                                    job.id,
+                                    marker,
+                                    "Done",
+                                    cmdText);
+
+                            job.doneShown = true;
+                        } else {
+                            toRemove.add(job);
+                        }
+                    }
                 }
+
+                jobs.removeAll(toRemove);
             }
 
             else {
