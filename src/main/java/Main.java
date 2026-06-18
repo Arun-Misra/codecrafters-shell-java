@@ -18,10 +18,16 @@ public class Main {
             } else if (cmd.startsWith("cd ")) {
                 String path = cmd.substring(3);
 
-                File newDir = new File(path);
+                File newDir;
+
+                if (new File(path).isAbsolute()) {
+                    newDir = new File(path);
+                } else {
+                    newDir = new File(currentDir, path);
+                }
 
                 if (newDir.exists() && newDir.isDirectory()) {
-                    currentDir = newDir;
+                    currentDir = newDir.getCanonicalFile();
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
